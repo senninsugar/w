@@ -2,9 +2,9 @@
   "name": "hono-manga-viewer",
   "version": "1.0.0",
   "type": "module",
-  "main": "index.js",
+  "main": "server.mjs",
   "scripts": {
-    "start": "node --watch index.js"
+    "start": "node server.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",
