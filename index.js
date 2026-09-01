@@ -11,33 +11,24 @@ app.use('*', cors({
 }));
 
 // 画像を直接プロキシしてデータURIまたはバイナリで渡す関数
-async function fetchAsBase64(url) {
-    if (!url) return null;
+async function proxyImage(url, targetImgElement) {
+    if (imageCache.has(url)) {
+        targetImgElement.src = imageCache.get(url);
+        targetImgElement.style.opacity = '1';
+        return;
+    }
+
     try {
-        const response = await fetch(url, {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                'Referer': 'https://momon-ga.com/'
-            }
-        });
+        const res = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`);
+        const data = await res.json();
 
-        if (!response.ok) return null;
-
-        const contentType = response.headers.get('content-type') || 'image/jpeg';
-        const arrayBuffer = await response.arrayBuffer();
-        
-        let binary = '';
-        const bytes = new Uint8Array(arrayBuffer);
-        const len = bytes.byteLength;
-        for (let i = 0; i < len; i++) {
-            binary += String.fromCharCode(bytes[i]);
+        if (data.image) {
+            imageCache.set(url, data.image);
+            targetImgElement.src = data.image;
+            targetImgElement.style.opacity = '1';
         }
-        const base64String = btoa(binary);
-
-        return `data:${contentType};base64,${base64String}`;
     } catch (e) {
-        console.error(`Base64 Fetch Error: ${url}`, e.message);
-        return null;
+        console.error("Image proxy failed", e);
     }
 }
 
