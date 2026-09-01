@@ -207,7 +207,7 @@ app.get('/api/image-proxy', async (c) => {
 // UI（HTML/CSS/JS）の配信
 app.get('/', (c) => {
     return c.html(`
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
@@ -219,163 +219,288 @@ app.get('/', (c) => {
             --card-bg: #1e293b;
             --text-color: #f8fafc;
             --accent-color: #38bdf8;
+            --accent-hover: #0284c7;
             --secondary-text: #94a3b8;
+            --border-color: #334155;
+            --skeleton-base: #1e293b;
+            --skeleton-highlight: #334155;
         }
+
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             line-height: 1.5;
+            min-height: 100vh;
         }
+
         header {
             position: sticky;
             top: 0;
             z-index: 100;
-            background-color: rgba(15, 23, 42, 0.9);
-            backdrop-filter: blur(8px);
-            padding: 1rem;
-            border-bottom: 1px solid #334155;
+            background-color: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
-            gap: 10px;
+            gap: 12px;
             justify-content: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
-        input[type="text"] {
+
+        .search-box {
+            display: flex;
             width: 100%;
-            max-width: 500px;
-            padding: 0.6rem 1rem;
-            border-radius: 8px;
-            border: 1px solid #334155;
-            background: #1e293b;
-            color: #fff;
-            font-size: 1rem;
-            outline: none;
+            max-width: 600px;
+            gap: 8px;
         }
-        input[type="text"]:focus { border-color: var(--accent-color); }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: rgba(30, 41, 59, 0.7);
+            color: #fff;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        input[type="text"]:focus { 
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+        }
+
         button {
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
             border: none;
             background-color: var(--accent-color);
-            color: #000;
-            font-weight: bold;
+            color: #0f172a;
+            font-weight: 700;
             cursor: pointer;
-            transition: opacity 0.2s;
+            transition: background-color 0.2s, transform 0.1s;
         }
-        button:hover { opacity: 0.9; }
-        main { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
+
+        button:hover { background-color: var(--accent-hover); }
+        button:active { transform: scale(0.98); }
+
+        main { padding: 2rem 1.5rem; max-width: 1400px; margin: 0 auto; }
+
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 1rem;
+            gap: 1.25rem;
         }
+
+        /* Card Styles */
         .card {
             background: var(--card-bg);
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid var(--border-color);
+            transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s, border-color 0.25s;
             display: flex;
             flex-direction: column;
+            animation: fadeIn 0.4s ease-out forwards;
         }
+
         .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            transform: translateY(-6px);
+            box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.6);
+            border-color: var(--accent-color);
         }
-        .card img {
+
+        .card-img-wrapper {
+            position: relative;
             width: 100%;
             aspect-ratio: 3/4;
-            object-fit: cover;
-            background: #334155;
+            background: var(--border-color);
+            overflow: hidden;
         }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s;
+        }
+
         .card-title {
-            padding: 0.8rem;
-            font-size: 0.85rem;
+            padding: 1rem;
+            font-size: 0.875rem;
             font-weight: 500;
+            line-height: 1.4;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            color: var(--text-color);
         }
+
         /* Modal */
         .modal {
             display: none;
             position: fixed;
             inset: 0;
             z-index: 200;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(5px);
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
             overflow-y: auto;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
+
+        .modal.active {
+            display: block;
+            opacity: 1;
+        }
+
         .modal-content {
-            max-width: 1000px;
-            margin: 2rem auto;
+            max-width: 900px;
+            margin: 3rem auto;
             background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 2rem;
             position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
         }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
         .close-btn {
             position: absolute;
-            top: 1rem; right: 1rem;
-            background: transparent;
+            top: 1.25rem; 
+            right: 1.25rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: #fff;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
         }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+
         .meta-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin: 1rem 0;
-            background: #0f172a;
-            padding: 1rem;
-            border-radius: 8px;
+            gap: 12px;
+            margin: 1.5rem 0;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 1.25rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
             font-size: 0.9rem;
         }
-        .tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+
+        .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
         .tag {
-            background: #334155;
-            padding: 2px 8px;
-            border-radius: 4px;
+            background: var(--border-color);
+            padding: 4px 10px;
+            border-radius: 6px;
             font-size: 0.8rem;
+            color: var(--accent-color);
         }
+
         .gallery {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
             margin-top: 1.5rem;
         }
+
         .gallery img {
             width: 100%;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
             aspect-ratio: 3/4;
             object-fit: cover;
+            border: 1px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
         }
-        .spinner {
-            text-align: center;
-            padding: 3rem;
+
+        .gallery img:hover {
+            transform: scale(1.03);
+            border-color: var(--accent-color);
+        }
+
+        /* Animations & Skeletons */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { background-position: 0% 0%; }
+            100% { background-position: -200% 0%; }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, var(--skeleton-base) 25%, var(--skeleton-highlight) 37%, var(--skeleton-base) 63%);
+            background-size: 200% 100%;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+
+        .spinner-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem;
+            gap: 1rem;
+            grid-column: 1 / -1;
             color: var(--secondary-text);
-            font-size: 1.2rem;
+        }
+
+        .spinner-ring {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--accent-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
     <header>
-        <input type="text" id="searchInput" placeholder="検索キーワードを入力..." onkeypress="handleKeyPress(event)">
-        <button onclick="performSearch()">検索</button>
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="検索キーワードを入力..." onkeypress="handleKeyPress(event)">
+            <button onclick="performSearch()">検索</button>
+        </div>
     </header>
 
     <main>
         <div id="content" class="grid"></div>
     </main>
 
-    <div id="detailModal" class="modal">
+    <div id="detailModal" class="modal" onclick="handleModalClick(event)">
         <div class="modal-content">
             <button class="close-btn" onclick="closeModal()">✕</button>
             <h2 id="modalTitle"></h2>
-            <div id="modalMeta" class="meta-grid"></div>
+            <div id="modalMeta"></div>
             <div id="modalGallery" class="gallery"></div>
         </div>
     </div>
@@ -386,57 +511,80 @@ app.get('/', (c) => {
         async function proxyImage(url, targetImgElement) {
             if (imageCache.has(url)) {
                 targetImgElement.src = imageCache.get(url);
+                targetImgElement.style.opacity = '1';
                 return;
             }
             try {
-                const res = await fetch(\`/api/image-proxy?url=\${encodeURIComponent(url)}\`);
+                const res = await fetch(`/api/image-proxy?url=${encodeURIComponent(url)}`);
                 const data = await res.json();
                 if (data.image) {
                     imageCache.set(url, data.image);
                     targetImgElement.src = data.image;
+                    targetImgElement.style.opacity = '1';
                 }
             } catch (e) {
                 console.error("Image proxy failed", e);
             }
         }
 
+        function renderSkeletons(count = 10) {
+            const content = document.getElementById('content');
+            content.className = 'grid';
+            content.innerHTML = Array(count).fill(0).map(() => `
+                <div class="card" style="pointer-events: none;">
+                    <div class="card-img-wrapper skeleton"></div>
+                    <div class="card-title">
+                        <div class="skeleton" style="height: 1em; width: 90%; margin-bottom: 6px; border-radius: 4px;"></div>
+                        <div class="skeleton" style="height: 1em; width: 60%; border-radius: 4px;"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         async function performSearch() {
             const query = document.getElementById('searchInput').value;
             const content = document.getElementById('content');
-            content.className = '';
-            content.innerHTML = '<div class="spinner">検索中...</div>';
+            
+            renderSkeletons();
 
             try {
-                const res = await fetch(\`/api/search?q=\${encodeURIComponent(query)}\`);
+                const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
                 const data = await res.json();
                 
-                content.className = 'grid';
                 content.innerHTML = '';
 
                 if (!data.result || data.result.length === 0) {
-                    content.innerHTML = '<div style="grid-column: 1/-1; text-align:center;">結果が見つかりませんでした</div>';
+                    content.innerHTML = '<div class="spinner-container">結果が見つかりませんでした</div>';
                     return;
                 }
 
-                data.result.forEach(item => {
+                data.result.forEach((item, index) => {
                     const card = document.createElement('div');
                     card.className = 'card';
+                    card.style.animationDelay = `${index * 0.03}s`;
                     card.onclick = () => openDetails(item.id);
+
+                    const imgWrapper = document.createElement('div');
+                    imgWrapper.className = 'card-img-wrapper skeleton';
 
                     const img = document.createElement('img');
                     img.alt = item.title;
+                    img.style.opacity = '0';
+                    img.onload = () => imgWrapper.classList.remove('skeleton');
+                    
                     proxyImage(item.imageUrl, img);
 
                     const title = document.createElement('div');
                     title.className = 'card-title';
                     title.innerText = item.title;
 
-                    card.appendChild(img);
+                    imgWrapper.appendChild(img);
+                    card.appendChild(imgWrapper);
                     card.appendChild(title);
                     content.appendChild(card);
                 });
             } catch (e) {
-                content.innerHTML = '<div style="grid-column: 1/-1; text-align:center; color:red;">エラーが発生しました</div>';
+                content.innerHTML = '<div class="spinner-container" style="color:#f87171;">エラーが発生しました。時間を置いて再度お試しください。</div>';
             }
         }
 
@@ -448,32 +596,46 @@ app.get('/', (c) => {
 
             modalTitle.innerText = "読み込み中...";
             modalMeta.innerHTML = '';
-            modalGallery.innerHTML = '<div class="spinner">画像読み込み中...</div>';
+            modalGallery.innerHTML = `
+                <div class="spinner-container">
+                    <div class="spinner-ring"></div>
+                    <span>詳細を読み込み中...</span>
+                </div>
+            `;
+            
             modal.style.display = 'block';
+            // Trigger reflow for CSS transition
+            modal.offsetHeight; 
+            modal.classList.add('active');
 
             try {
-                const res = await fetch(\`/api/proxy-details?id=\${id}\`);
+                const res = await fetch(`/api/proxy-details?id=${id}`);
                 const data = await res.json();
 
                 modalTitle.innerText = data.title;
-                modalMeta.innerHTML = \`
-                    \${data.circle ? \`<div><b>サークル:</b> \${data.circle}</div>\` : ''}
-                    \${data.author ? \`<div><b>作者:</b> \${data.author}</div>\` : ''}
-                    \${data.parody ? \`<div><b>原作:</b> \${data.parody}</div>\` : ''}
-                    \${data.character ? \`<div><b>キャラ:</b> \${data.character}</div>\` : ''}
-                    \${data.pages ? \`<div><b>ページ数:</b> \${data.pages}P</div>\` : ''}
-                    \${data.postDate ? \`<div><b>投稿日:</b> \${data.postDate}</div>\` : ''}
-                    <div style="grid-column: 1/-1;">
-                        <b>タグ:</b>
-                        <div class="tag-list">
-                            \${data.tags.map(t => \`<span class="tag">\${t}</span>\`).join('')}
+                modalMeta.className = 'meta-grid';
+                modalMeta.innerHTML = `
+                    ${data.circle ? `<div><b>サークル:</b> ${data.circle}</div>` : ''}
+                    ${data.author ? `<div><b>作者:</b> ${data.author}</div>` : ''}
+                    ${data.parody ? `<div><b>原作:</b> ${data.parody}</div>` : ''}
+                    ${data.character ? `<div><b>キャラ:</b> ${data.character}</div>` : ''}
+                    ${data.pages ? `<div><b>ページ数:</b> ${data.pages}P</div>` : ''}
+                    ${data.postDate ? `<div><b>投稿日:</b> ${data.postDate}</div>` : ''}
+                    ${data.tags && data.tags.length ? `
+                        <div style="grid-column: 1/-1;">
+                            <b>タグ:</b>
+                            <div class="tag-list">
+                                ${data.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+                            </div>
                         </div>
-                    </div>
-                \`;
+                    ` : ''}
+                `;
 
                 modalGallery.innerHTML = '';
                 data.images.forEach(url => {
                     const img = document.createElement('img');
+                    img.className = 'skeleton';
+                    img.onload = () => img.classList.remove('skeleton');
                     proxyImage(url, img);
                     img.onclick = () => window.open(img.src, '_blank');
                     modalGallery.appendChild(img);
@@ -481,19 +643,26 @@ app.get('/', (c) => {
 
             } catch (e) {
                 modalTitle.innerText = "エラー";
-                modalGallery.innerHTML = "詳細情報の取得に失敗しました。";
+                modalGallery.innerHTML = "<div style='grid-column: 1/-1; text-align: center; color: #f87171;'>詳細情報の取得に失敗しました。</div>";
             }
         }
 
         function closeModal() {
-            document.getElementById('detailModal').style.display = 'none';
+            const modal = document.getElementById('detailModal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 300);
+        }
+
+        function handleModalClick(e) {
+            if (e.target.id === 'detailModal') closeModal();
         }
 
         function handleKeyPress(e) {
             if (e.key === 'Enter') performSearch();
         }
 
-        // 初回起動時にトップページ一覧を表示
         performSearch();
     </script>
 </body>
